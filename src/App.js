@@ -4,6 +4,7 @@ import { useAuthenticationStatus } from "@nhost/react";
 import Auth from "./auth/Auth";
 import ChatList from "./components/ChatList";
 import ChatView from "./components/ChatView";
+import VerifyEmail from "./pages/VerifyEmail";
 
 function AuthGuard({ children }) {
   const { isAuthenticated, isLoading } = useAuthenticationStatus();
@@ -32,6 +33,7 @@ export default function App() {
           </AuthGuard>
         }
       />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
