@@ -16,6 +16,7 @@ function AuthGuard({ children }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/auth" element={<Auth />} />
       <Route
         path="/"
@@ -33,7 +34,7 @@ export default function App() {
           </AuthGuard>
         }
       />
-      <Route path="/verify-email" element={<VerifyEmail />} />
+      
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
