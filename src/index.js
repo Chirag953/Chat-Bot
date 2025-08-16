@@ -1,17 +1,33 @@
+// src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import { NhostClient, NhostProvider } from '@nhost/react';
+import { NhostApolloProvider } from '@nhost/react-apollo';
+import { BrowserRouter } from 'react-router-dom';
+import { Suspense } from 'react';
+const NHOST_SUBDOMAIN = 'vmtocoayfeepqjvmjjev';
+const NHOST_REGION = 'ap-south-1';
+
+
+const nhost = new NhostClient({
+  subdomain: NHOST_SUBDOMAIN,
+  region: NHOST_REGION
+
+});
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <NhostProvider nhost={nhost}>
+      <NhostApolloProvider nhost={nhost}>
+        <BrowserRouter>
+          <Suspense fallback={<div>Loading app…</div>}>
+            <App />
+          </Suspense>
+        </BrowserRouter>
+      </NhostApolloProvider>
+    </NhostProvider>
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
