@@ -1,42 +1,32 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useNhostClient } from "@nhost/react";
+import { useEffect, useState } from 'react';
+import { useNhostClient } from '@nhost/react';
+import { useNavigate } from 'react-router-dom';
 
 export default function VerifyEmail() {
-  const [searchParams] = useSearchParams();
   const nhost = useNhostClient();
-  const nav = useNavigate();
-  const [status, setStatus] = useState("Verifying email...");
+  const [status, setStatus] = useState('Verifying…');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const ticket = searchParams.get("ticket");
+    const params = new URLSearchParams(window.location.search);
+    const ticket = params.get('ticket');
 
     if (!ticket) {
-      setStatus("❌ Invalid verification link.");
+      setStatus('❌ No verification ticket found.');
       return;
     }
 
-    async function verify() {
-      try {
-        const { error } = await nhost.auth.verifyEmail({ ticket });
-        if (error) {
-          setStatus("❌ Verification failed. Try again.");
+    nhost.auth.verifyEmail({ ticket })
+      .then(res => {
+        if (res.isSuccess) {
+          setStatus('✅ Email verified successfully!');
+          setTimeout(() => navigate('/auth'), 2000); // redirect to login
         } else {
-          setStatus("✅ Email verified! Redirecting to login...");
-          setTimeout(() => nav("/auth"), 2000);
+          setStatus(`❌ Verification failed: ${res.error?.message}`);
         }
-      } catch (err) {
-        console.error(err);
-        setStatus("❌ Unexpected error verifying email.");
-      }
-    }
+      })
+      .catch(err => setStatus(`❌ Error: ${err.message}`));
+  }, [nhost, navigate]);
 
-    verify();
-  }, [nhost, searchParams, nav]);
-
-  return (
-    <div style={{ textAlign: "center", padding: "50px" }}>
-      <h2>{status}</h2>
-    </div>
-  );
+  return <div style={{ padding: 24, textAlign: 'center' }}>{status}</div>;
 }
