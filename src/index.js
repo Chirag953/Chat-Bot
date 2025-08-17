@@ -12,11 +12,20 @@ const NHOST_REGION = 'ap-south-1';
 
 const nhost = new NhostClient({
   subdomain: NHOST_SUBDOMAIN,
-  region: NHOST_REGION
-
+  region: NHOST_REGION,
+  autoRefreshToken: false,
+  autoSignIn: false, 
 });
 
-
+nhost.auth.onAuthStateChanged((event, session) => {
+  if (event === 'VERIFICATION_REQUESTED') {
+    const ticket = session?.verificationTicket;
+    if (ticket) {
+      localStorage.setItem('verification_ticket', ticket);
+      console.log('Stored verification ticket:', ticket);
+    }
+  }
+});
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

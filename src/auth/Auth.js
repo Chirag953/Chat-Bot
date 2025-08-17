@@ -1,25 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSignInEmailPassword, useSignUpEmailPassword } from '@nhost/react';
 import { useNavigate } from 'react-router-dom';
-import './Auth.css'; // Make sure this path is correct relative to this file
+import './Auth.css';
 
 export default function Auth() {
   const nav = useNavigate();
-  const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
+  const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [busyMessage, setBusyMessage] = useState(''); // optional inline feedback
+  const [busyMessage, setBusyMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { signInEmailPassword, isLoading: signingIn } = useSignInEmailPassword();
   const { signUpEmailPassword, isLoading: signingUp } = useSignUpEmailPassword();
 
+  // Clean up verification data on auth page
+  useEffect(() => {
+    localStorage.removeItem('verification_ticket');
+    localStorage.removeItem('verification_refreshToken');
+  }, []);
+
   async function onSubmit(e) {
     e.preventDefault();
     setBusyMessage('');
+    setErrorMessage('');
 
-    // simple client-side validation
     if (!email.trim() || !password.trim()) {
-      return alert('Please enter email and password.');
+      return setErrorMessage('Please enter both email and password.');
     }
 
     try {
@@ -28,52 +36,83 @@ export default function Auth() {
         const result = await signInEmailPassword(email, password);
 
         if (!result?.isSuccess) {
-          // detailed message if available
-          return alert(result?.error?.message || 'Unable to sign in. Please check credentials.');
+          const errorMsg = result?.error?.message || 'Unable to sign in. Please check credentials.';
+          return setErrorMessage(errorMsg);
         }
-
-        // successful sign in
         nav('/');
       } else {
         setBusyMessage('Creating account…');
         const result = await signUpEmailPassword(email, password);
 
-        // Nhost returns a result object. If verification is enabled the user exists but isn't signed in.
-        if (!result) {
-          return alert('Unable to create account. Please try again.');
+        // Log result for debugging
+        console.log('SignUp Result:', result);
+        
+        // Successful signup
+        if (result.isSuccess) {
+          setShowSuccess(true);
+          return;
         }
-
-        // If there is an error field, show appropriate message.
-        if (!result.isSuccess && result.error) {
-          // If user created but not verified, Nhost may return an error but also create the user.
-          // We treat created-but-unverified as success message.
-          if (result.user) {
-            alert(
-              'Account created successfully. A verification email has been sent to your inbox. ' +
-                'If you don’t see it, please check your Spam/Promotions folder. Then sign in.'
-            );
-            setMode('signin');
-            return;
-          }
-          return alert(result.error.message || 'Unable to create account. Please try again.');
+        
+        // User created but needs verification
+        if (result.error?.message?.includes('email needs to be verified') && result.user) {
+          setShowSuccess(true);
+          return;
         }
-
-        // success path (user created)
-        alert(
-          '✅ Account created successfully!\n\n📧 A verification email has been sent to your inbox.\n' +
-            'If you don’t see it, please check your Spam or Promotions folder.\n\nOnce verified, you can sign in.'
-        );
-        setMode('signin');
+        
+        // Handle other errors
+        if (result.error) {
+          return setErrorMessage(result.error.message || 'Unable to create account. Please try again.');
+        }
+        
+        // Fallback error
+        return setErrorMessage('An unexpected error occurred during signup.');
       }
     } catch (err) {
-      // unexpected runtime/network error
       console.error('Auth error', err);
-      alert('An unexpected error occurred. Check console for details.');
+      setErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
-      setBusyMessage('');
+      if (mode !== 'signup' || !showSuccess) {
+        setBusyMessage('');
+      }
     }
   }
 
+  // Render success UI
+  if (showSuccess && mode === 'signup') {
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="logo">ChatApp</div>
+          
+          <div style={{ 
+            textAlign: 'center',
+            padding: '20px 0',
+            animation: 'fadeIn 1s ease-out'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem', color: '#4dabf7' }}>✓</div>
+            <h2 style={{ marginBottom: '1rem' }}>Verification Email Sent!</h2>
+            <p style={{ marginBottom: '1.5rem' }}>
+              We've sent a verification email to <strong>{email}</strong>.
+              Please check your inbox and follow the instructions to verify your account.
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#8B8B8D', marginBottom: '2rem' }}>
+              <strong>Note:</strong> If you don't see the email, check your spam folder.
+            </p>
+            <button
+              className="submit-btn"
+              onClick={() => {
+                setMode('signin');
+                setShowSuccess(false);
+              }}
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  // Render normal auth form
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -128,9 +167,12 @@ export default function Auth() {
             {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}
           </span>
           <button
-            type="button"               // IMPORTANT: prevent accidental form submission
+            type="button"
             className="link-btn"
-            onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+            onClick={() => {
+              setMode(mode === 'signin' ? 'signup' : 'signin');
+              setShowSuccess(false);
+            }}
           >
             {mode === 'signin' ? 'Create one' : 'Sign in'}
           </button>
