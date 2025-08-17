@@ -13,7 +13,7 @@ export default function VerifyEmail() {
     const verifyEmail = async () => {
       // Get ticket from URL parameters
       const ticket = searchParams.get('ticket');
-      const refreshToken = searchParams.get('refreshToken');
+    //   const refreshToken = searchParams.get('refreshToken');
       
       if (!ticket) {
         setStatus('❌ No verification ticket found in URL.');

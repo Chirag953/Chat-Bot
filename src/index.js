@@ -22,7 +22,7 @@ nhost.auth.onAuthStateChanged((event, session) => {
     const ticket = session?.verificationTicket;
     if (ticket) {
       localStorage.setItem('verification_ticket', ticket);
-      console.log('Stored verification ticket:', ticket);
+     
     }
   }
 });

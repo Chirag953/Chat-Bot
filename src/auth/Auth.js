@@ -10,7 +10,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [busyMessage, setBusyMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  // const [errorMessage, setErrorMessage] = useState('');
 
   const { signInEmailPassword, isLoading: signingIn } = useSignInEmailPassword();
   const { signUpEmailPassword, isLoading: signingUp } = useSignUpEmailPassword();
@@ -24,10 +24,10 @@ export default function Auth() {
   async function onSubmit(e) {
     e.preventDefault();
     setBusyMessage('');
-    setErrorMessage('');
+    // setErrorMessage('');
 
     if (!email.trim() || !password.trim()) {
-      return setErrorMessage('Please enter both email and password.');
+      // return setErrorMessage('Please enter both email and password.');
     }
 
     try {
@@ -36,12 +36,12 @@ export default function Auth() {
         const result = await signInEmailPassword(email, password);
 
         if (!result?.isSuccess) {
-          const errorMsg = result?.error?.message || 'Unable to sign in. Please check credentials.';
-          return setErrorMessage(errorMsg);
+          // const errorMsg = result?.error?.message || 'Unable to sign in. Please check credentials.';
+          // return setErrorMessage(errorMsg);
         }
         nav('/');
       } else {
-        setBusyMessage('Creating account…');
+        setBusyMessage('');
         const result = await signUpEmailPassword(email, password);
 
         // Log result for debugging
@@ -50,27 +50,29 @@ export default function Auth() {
         // Successful signup
         if (result.isSuccess) {
           setShowSuccess(true);
+          alert(`✅ Account created successfully!\n\n📧 A verification email has been sent to your inbox.\nIf you don’t see it, please check your Spam or Promotions folder.\n\nOnce verified, you can sign in.`);
           return;
         }
-        
+        setShowSuccess(true);
         // User created but needs verification
         if (result.error?.message?.includes('email needs to be verified') && result.user) {
           setShowSuccess(true);
+          
           return;
         }
         
-        // Handle other errors
-        if (result.error) {
-          return setErrorMessage(result.error.message || 'Unable to create account. Please try again.');
-        }
+        // // Handle other errors
+        // if (result.error) {
+        //   return setErrorMessage(result.error.message || 'Unable to create account. Please try again.');
+        // }
         
         // Fallback error
-        return setErrorMessage('An unexpected error occurred during signup.');
+        // return setErrorMessage('An unexpected error occurred during signup.');
       }
     } catch (err) {
       console.error('Auth error', err);
-      setErrorMessage('An unexpected error occurred. Please try again.');
-    } finally {
+    //   setErrorMessage('An unexpected error occurred. Please try again.');
+    // } finally {
       if (mode !== 'signup' || !showSuccess) {
         setBusyMessage('');
       }
@@ -119,7 +121,7 @@ export default function Auth() {
         <div className="logo">ChatApp</div>
 
         <h2 className="title">{mode === 'signin' ? 'Sign in to your account' : 'Create a new account'}</h2>
-
+        {/* {errorMessage && <div className="error-message">{errorMessage}</div>} */}
         <form onSubmit={onSubmit} className="auth-form" autoComplete="off">
           <label className="field">
             <span className="label">Email</span>
